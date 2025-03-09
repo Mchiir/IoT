@@ -1,9 +1,11 @@
-// WebSocket Client
-const socket = new WebSocket('ws://157.173.101.159:9001'); // Replace with your WebSocket server URL
+ // Initialize MQTT Client
+ const mqttClient = mqtt.connect('ws://157.173.101.159:9001') // Replace with your MQTT broker URL
 
-const ctx = document.getElementById('myChart').getContext('2d')
-const timeLabels = []
-const chart = new Chart(ctx, {
+ const ctx = document.getElementById('myChart').getContext('2d')
+ const timeLabels = []
+ let timeCounter = 0; // Time counter for labels (in minutes)
+
+ const chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: timeLabels, // x-axis labels
@@ -39,6 +41,9 @@ const chart = new Chart(ctx, {
                 title: {
                     display: true,
                     text: 'Time (minutes)'
+                },
+                ticks: {
+                    stepSize: 5 // Set stepSize to 5 minutes
                 }
             }
         },
@@ -50,53 +55,69 @@ const chart = new Chart(ctx, {
             }
         }
     }
-})
+});
 
-let tempData = []
-let humidityData = []
-let startTime = Date.now()
+ let tempData = []
+ let humidityData = []
+ let startTime = Date.now()
 
-// WebSocket connection open event
-socket.onopen = () => {
-    console.log("Connected to WebSocket")
-}
+ mqttClient.on('connect', () => {
+     console.log("Connected to MQTT via WebSockets")
+     mqttClient.subscribe("/work_group_01/room_temp/temperature")
+     mqttClient.subscribe("/work_group_01/room_temp/humidity")
+ })
 
-// WebSocket message event
-socket.onmessage = (event) => {
-    const message = JSON.parse(event.data) // Assuming the message is JSON formatted
-    const currentTime = Math.floor((Date.now() - startTime) / 60000) // Time in minutes
+ mqttClient.on('message', (topic, message) => {
+     console.log(`Received: ${topic} → ${message.toString()}`)
+     const currentTime = Math.floor((Date.now() - startTime) / 60000) // Time in minutes
 
-    if (message.temperature) {
-        const tempValue = parseFloat(message.temperature)
-        document.getElementById("temp").innerText = tempValue.toFixed(2)
-        tempData.push(tempValue)
-    }
+     if (topic === "/work_group_01/room_temp/temperature") {
+         const tempValue = parseFloat(message.toString())
+         document.getElementById("temp").innerText = tempValue.toFixed(2)
+         tempData.push(tempValue)
+     } else if (topic === "/work_group_01/room_temp/humidity") {
+         const humidityValue = parseFloat(message.toString())
+         document.getElementById("humidity").innerText = humidityValue.toFixed(2)
+         humidityData.push(humidityValue)
+     }
+ })
 
-    if (message.humidity) {
-        const humidityValue = parseFloat(message.humidity)
-        document.getElementById("humidity").innerText = humidityValue.toFixed(2)
-        humidityData.push(humidityValue)
-    }
-}
+ // Function to calculate averages and insert into the database
+ const calculateAndStoreAverages = async () => {
+     if (tempData.length > 0 && humidityData.length > 0) {
+         const avgTemp = tempData.reduce((a, b) => a + b, 0) / tempData.length
+         const avgHumidity = humidityData.reduce((a, b) => a + b, 0) / humidityData.length
+         const timestamp = new Date().getTime() // Current timestamp in (Integer)
 
-// Function to calculate averages and update the chart
-const calculateAndStoreAverages = () => {
-    if (tempData.length > 0 && humidityData.length > 0) {
-        const avgTemp = tempData.reduce((a, b) => a + b, 0) / tempData.length
-        const avgHumidity = humidityData.reduce((a, b) => a + b, 0) / humidityData.length
-        const timestamp = Math.floor(Date.now() / 1000) // Current timestamp in seconds
+         // Update chart
+        timeLabels.push(timeCounter); // Push current time counter to chart
+        chart.data.datasets[0].data.push(avgTemp);
+        chart.data.datasets[1].data.push(avgHumidity);
 
-        // Update chart
-        timeLabels.push(Math.floor((Date.now() - startTime) / 60000)) // Update time labels
-        chart.data.datasets[0].data.push(avgTemp)
-        chart.data.datasets[1].data.push(avgHumidity)
-        chart.update() // Refresh the chart
+        $.ajax({
+            url: 'http://localhost:5000/weather_api',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                temperature: avgTemp,
+                humidity: avgHumidity,
+                timestamp: timestamp
+            }),
+            success: function(response) {
+                console.log(response.message);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        });
 
-        // Clear data arrays for next averaging period
-        tempData = []
-        humidityData = []
-    }
-}
+         chart.update() // Refresh the chart
 
-// Set an interval to calculate averages every minute (60000 ms)
-setInterval(calculateAndStoreAverages, 10000)
+         // Clear data arrays for next averaging period
+         tempData = []
+         humidityData = []
+         timeCounter++
+     }
+ }
+
+setInterval(calculateAndStoreAverages, 5000) // 5 sec
