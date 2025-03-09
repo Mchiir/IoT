@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory 
 import sqlite3
 from flask_cors import CORS, cross_origin
 
@@ -38,6 +38,10 @@ def init_db():
 @app.route("/")
 def hello_world():
     return "<p>Welcome to Weather station backend!</p>"
+
+@app.route("/home")
+def home():
+    return send_from_directory('templates', 'index.html')
 
 # Endpoint to handle saving and fetching weather data
 @app.route('/weather_api', methods=['POST', 'GET'])
