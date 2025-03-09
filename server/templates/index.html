@@ -120,14 +120,26 @@ const calculateAndStoreAverages = async () => {
        chart.data.datasets[0].data.push(avgTemp);
        chart.data.datasets[1].data.push(avgHumidity);
 
-       $.ajax({
+        chart.update() // Refresh the chart
+
+        // Clear data arrays for next averaging period
+        tempData = []
+        humidityData = []
+        timeCounter += 5
+        console.log("Temperature:", (chart.data.datasets[0].data)[(chart.data.datasets[0].data).length -1])
+        console.log("Humidity:", (chart.data.datasets[1].data)[(chart.data.datasets[1].data).length -1])
+    }
+}
+
+const saveData = () => {
+    $.ajax({
            url: 'http://localhost:5000/weather_api',
            type: 'POST',
            contentType: 'application/json',
            data: JSON.stringify({
-               temperature: avgTemp,
-               humidity: avgHumidity,
-               timestamp: timestamp
+               temperature: (chart.data.datasets[0].data)[(chart.data.datasets[0].data).length -1],
+               humidity: (chart.data.datasets[1].data)[(chart.data.datasets[1].data).length -1],
+               timestamp: new Date().getTime()
            }),
            success: function(response) {
                console.log(response.message);
@@ -136,17 +148,10 @@ const calculateAndStoreAverages = async () => {
                console.error('Error:', error);
            }
        });
-
-        chart.update() // Refresh the chart
-
-        // Clear data arrays for next averaging period
-        tempData = []
-        humidityData = []
-        timeCounter++
-    }
 }
 
 setInterval(calculateAndStoreAverages, 300000) // 5 min
+setInterval(saveData, 300000) // 5 min
     </script>
 </body>
 </html>
