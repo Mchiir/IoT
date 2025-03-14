@@ -1,0 +1,18 @@
+body {
+    background-color: #f8f9fa;
+}
+.container {
+    max-width: 500px;
+    margin-top: 50px;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.btn {
+    width: 100px;
+}
+textarea {
+    resize: none;
+    height: 100px;
+}
