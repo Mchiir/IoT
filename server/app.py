@@ -1,6 +1,11 @@
-from flask import Flask, request, jsonify, g, send_from_directory 
+from flask import Flask, request, jsonify, g, send_from_directory, render_template 
 import sqlite3
 from flask_cors import CORS, cross_origin
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -40,12 +45,17 @@ def hello_world():
     return "<p>Welcome to Weather station backend!</p>"
 
 @app.route("/home")
+@cross_origin(origins=["http://127.0.0.1:5000"])
 def home():
-    return send_from_directory('templates', 'index.html')
+    C = os.getenv("MQTT_CLIENT")
+    I1 =5000  # Interval for updating the chart (in milliseconds)
+    I2 =5000    # Interval for saving data (in milliseconds)
+    # print(f"MQTT client : {mqtt_client}")
+    return render_template('base.html', mqtt_client=C, upd_interval=I1, save_interval=I2)
 
 # Endpoint to handle saving and fetching weather data
 @app.route('/weather_api', methods=['POST', 'GET'])
-@cross_origin(origins=["http://127.0.0.1:5500", "http://localhost:3000", "http://127.0.0.1:3000"])
+@cross_origin(origins=["http://127.0.0.1:5000"])
 def weather_data():
     if request.method == 'POST':
         return save_weather_data()
