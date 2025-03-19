@@ -64,7 +64,8 @@
         let mqttClient = mqtt.connect('{{ mqtt_client }}');
         let upd_interval = '{{ upd_interval }}'
         let save_interval = '{{ save_interval }}'
-        // console.log('{{ mqtt_client }}', upd_interval, save_interval)
+        let server_url = '{{ server_url }}'
+        console.log('{{ mqtt_client }}', upd_interval, save_interval, server_url)
 
         document.addEventListener('DOMContentLoaded', ()=>{
             if(mqttClient == null){
@@ -177,7 +178,7 @@
 
         const saveData = () => {
             $.ajax({
-                url: 'http://localhost:5000/weather_api',
+                url: `${server_url}/weather_api`,
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({

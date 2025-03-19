@@ -40,22 +40,36 @@ def init_db():
         db.commit()
 
 # Endpoint for the home route
-@app.route("/")
-def hello_world():
-    return "<p>Welcome to Weather station backend!</p>"
+# @app.route("/")
+# def hello_world():
+#     return "<p>Welcome to Weather station backend!</p>"
 
-@app.route("/home")
-@cross_origin(origins=["http://127.0.0.1:5000"])
+@app.route("/")
+@cross_origin(origins=["http://127.0.0.1:5000", "https://nyabihu-weather-station.onrender.com"])
 def home():
-    C = os.getenv("MQTT_CLIENT")
-    I1 =5000  # Interval for updating the chart (in milliseconds)
-    I2 =5000    # Interval for saving data (in milliseconds)
-    # print(f"MQTT client : {mqtt_client}")
-    return render_template('base.html', mqtt_client=C, upd_interval=I1, save_interval=I2)
+    ENV = os.getenv("FLASK_ENV", "production")  # Default to production
+    MQTT_CLIENT = os.getenv("MQTT_CLIENT", "default_client")
+
+    if ENV == "development":
+        SERVER_URL = os.getenv("DEV_URI")
+        I1 = 5000  # Interval for updating chart in local dev
+        I2 = 5000  # Interval for saving data in local dev
+    else:
+        SERVER_URL = os.getenv("PROD_URI")
+        I1 = 300000  # 5 min in production
+        I2 = 300000  # 5 min in production
+
+    return render_template(
+        "base.html",
+        mqtt_client=MQTT_CLIENT,
+        server_url=SERVER_URL,
+        upd_interval=I1,
+        save_interval=I2
+    )
 
 # Endpoint to handle saving and fetching weather data
 @app.route('/weather_api', methods=['POST', 'GET'])
-@cross_origin(origins=["http://127.0.0.1:5000"])
+@cross_origin(origins=["http://127.0.0.1:5000", "https://nyabihu-weather-station.onrender.com"])
 def weather_data():
     if request.method == 'POST':
         return save_weather_data()
