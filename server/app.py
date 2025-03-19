@@ -103,4 +103,8 @@ def send_weather_data():
 
 if __name__ == "__main__":
     init_db()  # Initialize the database when the app starts
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
+# if __name__ == "__main__":
+#     init_db()  # Initialize the database when the app starts
+#     app.run(debug=True)

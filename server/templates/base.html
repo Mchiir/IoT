@@ -23,24 +23,44 @@
         }
         h2 {
             color: #007BFF;
+            font-size: 20px;
+            margin-bottom: 10px;
         }
+
         .data {
             font-size: 24px;
             font-weight: bold;
             color: #333;
         }
+
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        #chart-div{
+            margin: 0 1cm;
+        }
     </style>
 </head>
 <body>
-    <h2>MQTT Weather Station</h2>
+    <h2>Weather in Nyabihu</h2>
     <div class="container">
         <p>Temperature: <span id="temp" class="data">--</span> °C</p>
         <p>Humidity: <span id="humidity" class="data">--</span> %</p>
     </div>
-    <div>
+    <div id="chart-div">
         <canvas id="myChart"></canvas>
     </div>
+
+    <footer>
+        © <span id="year"></span> Mchiir | All Rights Reserved
+    </footer>
+
     <script>
+        document.getElementById('year').innerText = new Date().getFullYear();
+
         let mqttClient = mqtt.connect('{{ mqtt_client }}');
         let upd_interval = '{{ upd_interval }}'
         let save_interval = '{{ save_interval }}'
