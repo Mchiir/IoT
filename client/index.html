@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Scheduler</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Light Scheduler</h1>
+        <form id="scheduleForm">
+            <label for="onTime">ON Time (HH:MM:SS):</label>
+            <input type="time" id="onTime" name="onTime" step="1" required>
+            <label for="offTime">OFF Time (HH:MM:SS):</label>
+            <input type="time" id="offTime" name="offTime" step="1" required>
+            <button type="submit">Submit Schedule</button>
+        </form>
+        <p id="status">Status: Waiting for connection...</p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
