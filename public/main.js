@@ -1,7 +1,6 @@
 // MQTT Broker Configuration
 const brokerUrl = "ws://157.173.101.159:9001"; // Use your WebSocket-enabled broker
 const topic = "/student_group/light_control";
-
 // Create MQTT Client
 const mqttClient = mqtt.connect(brokerUrl);
 

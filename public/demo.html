@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Light Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #FFE5B4; /* Peach background */
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            flex: 1;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #offButton {
+            background-color: #dc3545;
+        }
+
+        #offButton:hover {
+            background-color: #a71d2a;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+
+        .status span {
+            font-weight: bold;
+            color: #28a745; /* Green for ON */
+        }
+
+        .status.off span {
+            color: #dc3545; /* Red for OFF */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MQTT Light Control</h1>
+        <div class="buttons">
+            <button id="onButton">Turn ON</button>
+            <button id="offButton">Turn OFF</button>
+        </div>
+        <p class="status" id="status">Status: <span>No command sent yet</span></p>
+    </div>
+
+    <script>
+        // MQTT Broker details (FIXED URL)
+        const broker = "ws://157.173.101.159:9001/mqtt"; // Ensure correct WebSocket URL
+        const topic = "/i-gabriel/light_control"; // MQTT topic
+
+        // Create an MQTT client
+        const client = new Paho.MQTT.Client(broker, "webClient");
+
+        // Handle MQTT connection
+        client.connect({
+            onSuccess: () => {
+                console.log("Connected to MQTT broker");
+                client.subscribe(topic);
+            },
+            onFailure: (err) => {
+                console.error("Failed to connect to MQTT broker", err);
+            }
+        });
+
+        // Handle incoming messages
+        client.onMessageArrived = function (message) {
+            console.log(`Received message on ${message.destinationName}: ${message.payloadString}`);
+            const statusElement = document.getElementById("status");
+            statusElement.innerHTML = `Status: <span>${message.payloadString}</span>`;
+            statusElement.classList.toggle("off", message.payloadString === "OFF");
+        };
+
+        // Function to publish a message
+        function publishMessage(message) {
+            if (client.isConnected()) {
+                const packet = new Paho.MQTT.Message(message);
+                packet.destinationName = topic;
+                client.send(packet);
+
+                // Update UI
+                console.log(`Published: ${message}`);
+                const statusElement = document.getElementById("status");
+                statusElement.innerHTML = `Status: <span>${message}</span>`;
+                statusElement.classList.toggle("off", message === "OFF");
+            } else {
+                console.error("MQTT Client is not connected.");
+            }
+        }
+
+        // Button event listeners
+        document.getElementById("onButton").addEventListener("click", () => publishMessage("ON"));
+        document.getElementById("offButton").addEventListener("click", () => publishMessage("OFF"));
+    </script>
+</body>
+</html>
